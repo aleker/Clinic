@@ -37,6 +37,8 @@ int main() {
         while (!quit) {
             // SEARCHING OUTDATED APPOINTMENTS
             searchForOutdatedAppointments();
+            // CHECK IF PATIENT WANT TO CHANGE THE DATE OF VISIT
+            answerForChangeDateOfVisit(msgid);
             // CHECK IF PATIENT'S DELETED AN APPOINTMENT
             deleteVisit(msgid, msgrcv_size);
             // CHECK IF DOCTOR HAS TAKEN A LEAVE

@@ -20,6 +20,7 @@ struct msgbuf vacation_list[5];
 bool quit;
 
 void answerForDoctorsLeave(int msgid);
+void answerForChangeDateOfVisit(int msgid);
 void deleteVisit(int msgid, int msgrcv_size);
 void searchForOutdatedAppointments();
 void searchForNewAppointment(int msgid, int msgrcv_size);

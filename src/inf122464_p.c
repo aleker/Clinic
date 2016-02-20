@@ -62,7 +62,7 @@ int main() {
                     requestForDoctorsList(msgid, &patient);
                 }
                 else if (decision == 's') {
-                    displayStatusOfVisit(msgid, &patient);
+                    displayStatusOfVisit(msgid, patient);
                     displayInstruction();
                 }
                 else if (decision == 'c') {

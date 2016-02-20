@@ -38,11 +38,13 @@ void searchForOutdatedAppointments() {
 }
 
 
-void answerForChangeDateOfVisit(int msgid, int msgrcv_size, struct msgbuf old_appointment) {
+void answerForChangeDateOfVisit(int msgid) {
     struct msgbuf new_date;
-    msgrcv_size = msgrcv(msgid, &new_date, MSGBUF_SIZE, CHANGE_VISIT, IPC_NOWAIT);
+    int msgrcv_size = msgrcv(msgid, &new_date, MSGBUF_SIZE, CHANGE_VISIT, IPC_NOWAIT);
     if (msgrcv_size > 0) {
+        printf("%s", ctime( & new_date.date_of_visit));
         if (fork() == 0) {
+            printf("//forknąłem answerForChangeDateOfVisit! %d\n", getpid());
             // choose doctor
             int i;
             int meetings[5];
@@ -61,54 +63,72 @@ void answerForChangeDateOfVisit(int msgid, int msgrcv_size, struct msgbuf old_ap
             }
             // CHOOSING TIME
             // set tomorrow's date
+            printf("// wybrany index = %d\n", min_meetings_index);
             struct tm tomorrow_date;
             const int one_day = 86400;
-            time_t tomorrow = today + one_day;
-            tomorrow_date = *localtime(&tomorrow);
-            tomorrow_date.tm_hour = 8; // 0-23
+            time_t tomorrow = today;
+            while (true) {                  // cannot be saturday or sunday
+                tomorrow = tomorrow + one_day;
+                tomorrow_date = *localtime(&tomorrow);
+                if (tomorrow_date.tm_wday != 6 && tomorrow_date.tm_wday != 0) break;
+            }
+            tomorrow_date.tm_hour = 9;
             tomorrow_date.tm_min = 0;
             tomorrow_date.tm_sec = 0;
             tomorrow = mktime(&tomorrow_date);
-            bool founded_date = false;
+            printf ("//jutro to %s\n", ctime( & tomorrow ));
+            printf("//wybieramy czas\n");
+
+            // TODO wziąć pod uwagę wakacje
+            int time_difference = (int)difftime(last_date,tomorrow);
+            bool founded_date;
+            time_t rand_date;
             while (!founded_date) {
-                for (i = 8;( i = 21 - new_date.time_of_visit); i++) {
-                    tomorrow_date.tm_hour = i;
-                    tomorrow = mktime(&tomorrow_date);
-                    int j;
-                    bool search = true;
-                    for (j = 0; j < APPOINTMENTS_LIST_SIZE; j++) {
-                        if (atoi(appointments_list[j].password) == min_meetings_index) {
-                            //founded choosen doctor
-                            time_t actual = tomorrow;
-                            int duration = new_date.time_of_visit;
-                            while (duration > 0) {
-                                if (actual == appointments_list[j].date_of_visit ||
-                                        actual < (appointments_list[j].date_of_visit + appointments_list[j].time_of_visit)) {
-                                    search = false;
-                                    break;
-                                }
-                                actual += 3600;
-                                duration --;
+                founded_date = true;
+                srand(time(NULL));
+                int rand_add = rand() % time_difference + 1;
+                rand_date = tomorrow + rand_add;
+                tomorrow_date = *localtime(&rand_date);
+                rand_add = rand() % 13 - new_date.time_of_visit;
+                tomorrow_date.tm_hour = 9 + rand_add;
+                tomorrow_date.tm_min = 0;
+                tomorrow_date.tm_sec = 0;
+                rand_date = mktime(&tomorrow_date);
+                printf ("//rand_date to %s\n", ctime( & rand_date ));
+                if (tomorrow_date.tm_wday != 6 && tomorrow_date.tm_wday != 0) {
+                    bool the_same_pesel;
+                    for(i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
+                        the_same_pesel = true;
+                        int j;
+                        bool the_same_pesel = true;
+                        for (j = 0; j < 11; j++) {
+                            if (appointments_list[i].pesel[j] != new_date.pesel[j]) {
+                                the_same_pesel = false;
+                                break;
                             }
-                            if (!search) break;
+                        }
+                        if (appointments_list[i].index == min_meetings_index || the_same_pesel) {
+                            if (rand_date >= appointments_list[i].date_of_visit
+                                    && rand_date <= appointments_list[i].date_of_visit + (86400*appointments_list[i].time_of_visit)) {
+                                founded_date = false;
+                                break;
+                            }
                         }
                     }
-                    if (search) {               // przeszedł wszystkie spotkania z tym lekarzem i OK
-                        founded_date = true;
-                        break;
-                    }
                 }
-                tomorrow += one_day;
-                tomorrow_date = *localtime(&tomorrow);
             }
-            // SENDING MEETING TO DOCTOR FOR ACCEPTATION
-            //itoa(min_meetings_index, &new_date.password, 10);
+            // DELETING OLD VISIT
+            printf("//usuwam starą wizytę\n");
+            new_date.typ = DELETE_VISIT;
+            msgsnd(msgid, &new_date, MSGBUF_SIZE, 0);
+            // SENDING INFO TO PATIENT
+            new_date.date_of_visit = rand_date;
             sprintf(new_date.password,"%d", min_meetings_index);
-            new_date.date_of_visit = tomorrow;
             strcpy(new_date.name, doctors_list[min_meetings_index].name);
             strcpy(new_date.surname, doctors_list[min_meetings_index].surname);
-            new_date.typ = min_meetings_index + 20;
+            new_date.typ = new_date.pid;
             msgsnd(msgid, &new_date, MSGBUF_SIZE, 0);
+
             exit(getpid());
         }
     }
@@ -124,7 +144,9 @@ void deleteReservedVisits(int msgid, struct msgbuf leave) {
                     appointments_list[i].date_of_visit <= end) {
                 if (leave.index == atoi(appointments_list[i].password)) {   // if ids of doctor are the same
                     // setting time_of_visit=0 -> deleting appointment
+                    printf("//usuwam wizytę\n");
                     appointments_list[i].time_of_visit = 0;
+                    appointments_list_size--;
                 }
             }
         }
@@ -204,7 +226,8 @@ void sendDayContent(int msgid, int msgrcv_size, int pid_registration, int pid_pa
             currentDate = *localtime(&appointments_list[i].date_of_visit);
             if ((currentDate.tm_year == appointmentDate.tm_year) &&
                 (currentDate.tm_mon == appointmentDate.tm_mon)
-                && (currentDate.tm_mday == appointmentDate.tm_mday)) {
+                && (currentDate.tm_mday == appointmentDate.tm_mday)
+                    && appointments_list[i].time_of_visit > 0) {
                 appointment = appointments_list[i];
                 appointment.pid = pid_registration; //APPOINTMENT_ANSWER;
                 appointment.typ = pid_patient;
@@ -421,7 +444,7 @@ void answerForListOfVisits(int msgid, int msgrcv_size) {
             // SENDING ALL APPOINTMENTS
             int i;
             bool appropriate = false;
-            for (i = 0; i < appointments_list_size; i++) {
+            for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
                 int j;
                 for (j = 0; j < 11; j++) {
                     if (appointments_list[i].pesel[j] != visit.pesel[j]) {
@@ -513,4 +536,3 @@ bool checkExit(int msgid) {
     }
     return false;
 }
-
