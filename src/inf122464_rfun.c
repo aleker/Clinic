@@ -79,7 +79,6 @@ void answerForChangeDateOfVisit(int msgid) {
             printf ("//jutro to %s\n", ctime( & tomorrow ));
             printf("//wybieramy czas\n");
 
-            // TODO wziąć pod uwagę wakacje
             int time_difference = (int)difftime(last_date,tomorrow);
             bool founded_date;
             time_t rand_date;
@@ -108,8 +107,14 @@ void answerForChangeDateOfVisit(int msgid) {
                             }
                         }
                         if (appointments_list[i].index == min_meetings_index || the_same_pesel) {
-                            if (rand_date >= appointments_list[i].date_of_visit
-                                    && rand_date <= appointments_list[i].date_of_visit + (86400*appointments_list[i].time_of_visit)) {
+                            if (rand_date >= appointments_list[i].date_of_visit &&
+                                rand_date <= appointments_list[i].date_of_visit + (86400*appointments_list[i].time_of_visit)) {
+                                founded_date = false;
+                                break;
+                            }
+                            if (rand_date >= vacation_list[min_meetings_index].date_of_visit &&
+                                rand_date <= vacation_list[min_meetings_index].date_of_visit + (86400*vacation_list[min_meetings_index].time_of_visit)) {
+                                printf("// ma wakacje!\n");
                                 founded_date = false;
                                 break;
                             }
@@ -117,10 +122,6 @@ void answerForChangeDateOfVisit(int msgid) {
                     }
                 }
             }
-            // DELETING OLD VISIT
-            printf("//usuwam starą wizytę\n");
-            new_date.typ = DELETE_VISIT;
-            msgsnd(msgid, &new_date, MSGBUF_SIZE, 0);
             // SENDING INFO TO PATIENT
             new_date.date_of_visit = rand_date;
             sprintf(new_date.password,"%d", min_meetings_index);
@@ -144,7 +145,7 @@ void deleteReservedVisits(int msgid, struct msgbuf leave) {
                     appointments_list[i].date_of_visit <= end) {
                 if (leave.index == atoi(appointments_list[i].password)) {   // if ids of doctor are the same
                     // setting time_of_visit=0 -> deleting appointment
-                    printf("//usuwam wizytę\n");
+                    printf("//usuwam wizytę %d\n", appointments_list_size);
                     appointments_list[i].time_of_visit = 0;
                     appointments_list_size--;
                 }
@@ -172,7 +173,7 @@ void deleteVisit(int msgid, int msgrcv_size) {
         int i;
         for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
             if (appointment.index == appointments_list[i].index) {
-                printf("//usuwam wizytę\n");
+                printf("//usuwam wizytę %d\n", appointments_list_size);
                 appointments_list[i].time_of_visit = 0;
                 appointments_list_size--;
             }
@@ -329,6 +330,9 @@ void answerForDoctorLoginRequest(int msgid, int msgrcv_size) {
                     int j;
                     // checking name
                     int name_size = strlen(doctors_list[i].name);
+                    int name_size2 = strlen(doctor.name);
+                    if (name_size != name_size2) appropriate = false;
+                    if (!appropriate) continue;
                     for (j = 0; j < name_size; j++) {
                         if (doctor.name[j] != doctors_list[i].name[j]) {
                             appropriate = false;
@@ -338,6 +342,9 @@ void answerForDoctorLoginRequest(int msgid, int msgrcv_size) {
                     if (!appropriate) continue;
                     // checking surname
                     int surname_size = strlen(doctors_list[i].surname);
+                    int surname_size2 = strlen(doctor.surname);
+                    if (surname_size != surname_size2) appropriate = false;
+                    if (!appropriate) continue;
                     for (j = 0; j < surname_size; j++) {
                         if (doctor.surname[j] != doctors_list[i].surname[j]) {
                             appropriate = false;
@@ -347,6 +354,9 @@ void answerForDoctorLoginRequest(int msgid, int msgrcv_size) {
                     if (!appropriate) continue;
                     // good name and surname:
                     int password_size = strlen(doctors_list[i].password);
+                    int password_size2 = strlen(doctor.password);
+                    if (password_size != password_size2) appropriate = false;
+                    if (!appropriate) continue;
                     for (j = 0; j < password_size; j++) {
                         if (doctor.password[j] != doctors_list[i].password[j]) {
                             // wrong password
@@ -403,6 +413,9 @@ void answerForLoginRequest(int msgid, int msgrcv_size) {
                     if (!appropriate) continue;
                     // good pesel, wrong password
                     int password_size = strlen(patients_list[i].password);
+                    int password_size2 = strlen(patient.password);
+                    if (password_size != password_size2) appropriate = false;
+                    if (!appropriate) continue;
                     for (j = 0; j < password_size; j++) {
                         if (patient.password[j] != patients_list[i].password[j]) {
                             printf("// złe hasło, brak logowania\n");
@@ -476,7 +489,7 @@ void answerForListOfVisits(int msgid, int msgrcv_size) {
             // choosing visit
             int number = visit.index;   // number of visit
             int counter = 0;
-            for (i = 0; i < appointments_list_size; i++) {
+            for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
                 appropriate = true;
                 int j;
                 for (j = 0; j < 11; j++) {
@@ -508,6 +521,11 @@ void searchForNewAppointment(int msgid, int msgrcv_size) {
     // from doctor when he want to change the date of visit:
     if (msgrcv_size <= 0) msgrcv_size = msgrcv(msgid, &appointment, MSGBUF_SIZE, NEW_VISIT, IPC_NOWAIT);
     if (msgrcv_size > 0) {
+        // ADDING NAMES AND SURNAMES
+        int index = atoi(appointment.password);
+        strcpy(appointment.name, doctors_list[index].name);
+        strcpy(appointment.surname, doctors_list[index].surname);
+        //
         bool ready;
         int i = 0;
         while (!ready) {

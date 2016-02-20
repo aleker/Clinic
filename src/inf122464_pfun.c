@@ -312,9 +312,10 @@ void displayYourVisits(int msgid, struct msgbuf* patient, int my_pid, int *regis
         }
         else {
             (*visit_counter) = *visit_counter + 1;
-            printf("%d %s", *visit_counter, ctime( &visit.date_of_visit));
+            printf("\t%d %s", *visit_counter, ctime( &visit.date_of_visit));
         }
     }
+    printf("\n");
     return;
 }
 
@@ -396,8 +397,6 @@ void cancelVisit(int msgid, struct msgbuf *patient) {
 }
 
 
-// TODO ! zmiana terminu wizyty (rejestracja sama przydziela datę)
-
 void changeDateOfVisit(int msgid, struct msgbuf* patient) {
     struct msgbuf del_appointment = displayStatusOfVisit(msgid, *patient);
     if (del_appointment.index == 1000) return;
@@ -419,26 +418,26 @@ void changeDateOfVisit(int msgid, struct msgbuf* patient) {
                 del_appointment.typ = CHANGE_VISIT;
                 msgsnd(msgid, &del_appointment, MSGBUF_SIZE, 0);
                 msgrcv(msgid, &new_appointment, MSGBUF_SIZE, my_pid, 0);
-                printf("\tYOUR NEW DATE: %s\n", ctime( & new_appointment.date_of_visit));
+                printf("\n\tYOUR NEW DATE: %s", ctime( & new_appointment.date_of_visit));
                 while (true) {
                     printf("\tDo you accept new date (a), want to generate new date (g), cancel changes (c)?: ");
                     char choice;
-                    scanf("%s", choice);
+                    scanf("%s", &choice);
                     if (choice == 'a') {
                         agree = true;
                         break;
                     }
                     else if (choice == 'g') break;
                     else if (choice == 'c') {
-                        // adding old appointment
-                        del_appointment.typ = NEW_VISIT;
-                        msgsnd(msgid, &del_appointment, MSGBUF_SIZE, 0);
-                        printf("//wysłałem starą datę\n");
                         return;
                     }
                 }
 
             }
+            // DELETING OLD VISIT
+            printf("//usuwam starą wizytę\n");
+            del_appointment.typ = DELETE_VISIT;
+            msgsnd(msgid, &del_appointment, MSGBUF_SIZE, 0);
             // ADDING NEW VISIT
             new_appointment.typ = NEW_VISIT;
             msgsnd(msgid, &new_appointment, MSGBUF_SIZE, 0);

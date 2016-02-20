@@ -3,7 +3,6 @@
 
 bool quit;
 
-void acceptVisit(int msgid, struct msgbuf* doctor);
 void displayInstruction();
 void takeLeave(int msgid, struct msgbuf* doctor);
 

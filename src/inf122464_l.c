@@ -57,10 +57,6 @@ int main() {
                     takeLeave(msgid, &doctor);
                     displayInstruction();
                 }
-                else if (decision == 'a') {
-                    acceptVisit(msgid, &doctor);
-                    displayInstruction();
-                }
             }
         }
     }
