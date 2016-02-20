@@ -15,25 +15,25 @@
 
 // TODO ! usuwanie przeterminowanych spotkań (nie działa) i przeterminowanych wakacji (index -> -1)
 void searchForOutdatedAppointments() {
-//    time_t now;
-//    time(&now);
-//    int i;
-//    for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
-//        if (appointments_list[i].time_of_visit == 0) continue; // free space
-//        if ((appointments_list[i].date_of_visit)  < now) {
-//            printf("//usuwam przeterminowany appointment");
-//            appointments_list[i].time_of_visit = 0;
-//            appointments_list_size--;
-//        }
-//    }
-//    for (i = 0; i < 5; i++) {
-//        if (vacation_list[i].index == i) {
-//            if ((vacation_list[i].date_of_visit + (vacation_list[i].time_of_visit * 86400)) < now) {
-//                printf("//usuwam przeterminowane wakacje\t");
-//                vacation_list[i].index = -1;
-//            }
-//        }
-//    }
+    time_t now;
+    time(&now);
+    int i;
+    for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
+        if (appointments_list[i].time_of_visit == 0) continue; // free space
+        if ((appointments_list[i].date_of_visit)  < now) {
+            printf("//usuwam przeterminowany appointment\n");
+            appointments_list[i].time_of_visit = 0;
+            appointments_list_size--;
+        }
+    }
+    for (i = 0; i < 5; i++) {
+        if (vacation_list[i].index == i) {
+            if ((vacation_list[i].date_of_visit + (vacation_list[i].time_of_visit * 86400)) < now) {
+                printf("//usuwam przeterminowane wakacje\n");
+                vacation_list[i].index = -1;
+            }
+        }
+    }
     return;
 }
 

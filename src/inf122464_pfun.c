@@ -119,10 +119,6 @@ void displayCalendar(char (*day)[13][5], int width, int height) {
     }
     return;
 }
-// TODO ! wyswietlanie konkretnego doktora i jego wolnych wizyt
-void requestForDoctorPossibleVisits(int msgid, struct msgbuf* patient) {
-
-}
 
 void requestForDoctorsList(int msgid, struct msgbuf* patient) {
     int pid_registration;
@@ -164,7 +160,6 @@ void requestForDoctorsList(int msgid, struct msgbuf* patient) {
     } while (1);
     printf("//dostałem holidaysy\n");
     displayCalendar(&day, 5, 13);
-    // TODO ograniczenie jednym znakiem, ograniczenie że liczby albo q, password size
     while (true) {
         printf("\n\tWrite 'a' to make an appointment or 'q' to go to main menu\n");
         char choice;
@@ -186,7 +181,7 @@ void requestForDoctorsList(int msgid, struct msgbuf* patient) {
         }
     }
 }
-// TODO umawianie wizyty ponad 2 miesiące -> przypomnienie 2 tygodnie przed
+// TODO ! umawianie wizyty ponad 2 miesiące -> przypomnienie 2 tygodnie przed
 bool makeAnAppointment(int msgid, struct msgbuf* patient, int pid_registration, bool doctors_decision) {
     struct msgbuf request;
     request.pid = patient->pid;
@@ -317,25 +312,6 @@ void displayYourVisits(int msgid, struct msgbuf* patient, int my_pid, int *regis
     }
     printf("\n");
     return;
-}
-
-void displayVisit(struct msgbuf* patient, struct msgbuf* visit) {
-    printf("\t-----------------------------------------\n");
-    printf("\tPATIENT:\n");
-    printf("\tNAME:\t\t%s\n", patient->name);
-    printf("\tSURNAME:\t%s\n", patient->surname);
-    printf("\tPESEL:\t\t");
-    int i;
-    for (i = 0; i < 11; i++) {
-        printf("%d", visit->pesel[i]);
-    }
-    printf("\n\tDOCTOR:\n");
-    printf("\tNAME:\t\t%s\n", visit->name);
-    printf("\tSURNAME:\t%s\n", visit->surname);
-    printf("\tAPPOINTMENT:\n");
-    printf("\tDATE:\t\t%s", ctime( &visit->date_of_visit));
-    printf("\tDURATION TIME:\t%d\n", visit->time_of_visit);
-    printf("\t-----------------------------------------\n");
 }
 
 struct msgbuf displayStatusOfVisit(int msgid, struct msgbuf patient) {

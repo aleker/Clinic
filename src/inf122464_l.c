@@ -12,7 +12,7 @@
 #include "inf122464_all.h"
 #include "inf122464_lfun.h"
 
-// TODO ! akceptowanie wizyt
+// TODO ! wyswietlanie wizyt
 int main() {
     int msgid = createMessageQueue("DOCTOR");
     clearCalendar(&day);

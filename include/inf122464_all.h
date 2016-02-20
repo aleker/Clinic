@@ -52,5 +52,6 @@ void clearCalendar(char (*day2)[13][5]);
 time_t improveDate(time_t date);
 void setLastDate();
 void readConfigurationFile(char file_name[30]);
+void displayVisit(struct msgbuf* patient, struct msgbuf* visit);
 
 #endif

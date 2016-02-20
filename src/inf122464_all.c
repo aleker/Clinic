@@ -13,7 +13,25 @@
 #include "inf122464_all.h"
 #include "inf122464_rfun.h"
 
-// TODO zabezpieczenie jak za duzo liter wpiszę (bo loguje), zabezpieczenie aby po jednym słowie
+void displayVisit(struct msgbuf* patient, struct msgbuf* visit) {
+    printf("\t-----------------------------------------\n");
+    printf("\tPATIENT:\n");
+    printf("\tNAME:\t\t%s\n", patient->name);
+    printf("\tSURNAME:\t%s\n", patient->surname);
+    printf("\tPESEL:\t\t");
+    int i;
+    for (i = 0; i < 11; i++) {
+        printf("%d", visit->pesel[i]);
+    }
+    printf("\n\tDOCTOR:\n");
+    printf("\tNAME:\t\t%s\n", visit->name);
+    printf("\tSURNAME:\t%s\n", visit->surname);
+    printf("\tAPPOINTMENT:\n");
+    printf("\tDATE:\t\t%s", ctime( &visit->date_of_visit));
+    printf("\tDURATION TIME:\t%d\n", visit->time_of_visit);
+    printf("\t-----------------------------------------\n");
+}
+
 struct msgbuf login(int msgid, int type) {
     struct msgbuf request;
     int pid_user = getpid(); // pid of user (patient or doctor)
