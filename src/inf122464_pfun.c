@@ -60,24 +60,7 @@ void chooseDate(struct msgbuf* patient) {
     } while(!appropriate);
     return;
 }
-void createMonth(char (*day), int width, int height, time_t date) {
-    struct tm chosenDate;
-    chosenDate = *localtime(&date);
-    // 0=sunday, 1=monday...
-    int day_type = chosenDate.tm_wday;
-    // 1=january...
-    int month_type = chosenDate.tm_mon + 1;
-    int day_amount;
-    if (month_type == 2) {
-        day_amount = 28;
-    }
-    else if (month_type == 1 || month_type == 3 || month_type == 5 || month_type == 7 ||
-            month_type == 8 || month_type == 10 || month_type == 12) {
-        day_amount = 31;
-    }
-    else day_amount = 30;
-    return;
-}
+
 
 void addAppointmentToCalendar(/*char (*day)[13][5],*/ struct msgbuf* patient, struct msgbuf appointment) {
     struct tm chosenDate;
@@ -86,7 +69,6 @@ void addAppointmentToCalendar(/*char (*day)[13][5],*/ struct msgbuf* patient, st
     int hour = chosenDate.tm_hour;
     if (hour < 9) hour = 0;
     else hour -= 9;
-    printf("//hour =  %d\n", hour);
     int duration = appointment.time_of_visit;
     bool this_patient = true;
     int i;
@@ -97,7 +79,6 @@ void addAppointmentToCalendar(/*char (*day)[13][5],*/ struct msgbuf* patient, st
         }
     }
     int index_doctor = atoi(appointment.password);
-    printf("//index_doctor = %d\n", index_doctor);
     while (duration > 0) {
         if (appointment.typ == D_LEAVE) {
             day[hour][appointment.index] = 'X'; // holiday time
@@ -111,10 +92,8 @@ void addAppointmentToCalendar(/*char (*day)[13][5],*/ struct msgbuf* patient, st
             day[hour][index_doctor] = 'o'; // from "occupied"
         } // from "occupied"
         duration--;
-        printf("//duration = %d\n", duration);
         hour++;
     }
-    printf("//addAppointmentToCalendar- quiting\n");
     return;
 }
 
@@ -167,7 +146,6 @@ void requestForDoctorsList(int msgid, struct msgbuf* patient) {
         if (request.index == 1000) {
             break;
         }
-        printf("// DOCTORS_ANSWER:\n");
         addAppointmentToCalendar(patient, request);
     } while (1);
     // receiving holidays:
@@ -177,33 +155,34 @@ void requestForDoctorsList(int msgid, struct msgbuf* patient) {
         if (request.index == 1000) {
             break;
         }
-        printf("// DOCTORS_ANSWER2:\n");
         request.typ = D_LEAVE;
         addAppointmentToCalendar(patient, request);
     } while (1);
     displayCalendar(&day, 5, 13);
     // TODO ograniczenie jednym znakiem, ograniczenie że liczby albo q, password size
-    printf("\n\tWrite 'a' to make an appointment or 'q' to go to main menu\n");
-    char choice;
-    scanf("%s", &choice);
-    if (choice == 'q') {
-        // QUIT
-        displayInstruction();
-        request.pid = pid_patient;
-        request.typ = pid_registration;
-        request.index = 1000;
-        msgsnd(msgid, &request, MSGBUF_SIZE, 0);
-        return ;
-    }
-    else if (choice == 'a') {
-        // MAKING AN APPOINTMENT
-        makeAnAppointment(msgid, patient, pid_registration);
-        displayInstruction();
-        return;
+    while (true) {
+        printf("\n\tWrite 'a' to make an appointment or 'q' to go to main menu\n");
+        char choice;
+        scanf("%s", &choice);
+        if (choice == 'q') {
+            // QUIT
+            displayInstruction();
+            request.pid = pid_patient;
+            request.typ = pid_registration;
+            request.index = 1000;
+            msgsnd(msgid, &request, MSGBUF_SIZE, 0);
+            return;
+        }
+        else if (choice == 'a') {
+            // MAKING AN APPOINTMENT
+            makeAnAppointment(msgid, patient, pid_registration, false);
+            displayInstruction();
+            return;
+        }
     }
 }
 // TODO umawianie wizyty ponad 2 miesiące -> przypomnienie 2 tygodnie przed
-void makeAnAppointment(int msgid, struct msgbuf* patient, int pid_registration) {
+bool makeAnAppointment(int msgid, struct msgbuf* patient, int pid_registration, bool doctors_decision) {
     struct msgbuf request;
     request.pid = patient->pid;
     request.typ = pid_registration;
@@ -215,7 +194,7 @@ void makeAnAppointment(int msgid, struct msgbuf* patient, int pid_registration) 
         do {
             printf("\tEnter the id of doctor: ");
             scanf("%s", request.password);
-            //request.index = atoi(request.password);
+            request.index = atoi(request.password);
         } while (request.index < 0 || request.index > 5);
         printf("\tEnter the duration of visit (in hours): ");
         scanf("%d", &request.time_of_visit);
@@ -246,13 +225,27 @@ void makeAnAppointment(int msgid, struct msgbuf* patient, int pid_registration) 
     for (p = 0; p < 11; p++) {
         request.pesel[p] = patient->pesel[p];
     }
+    // SENDING INFORMATION TO DOCTOR
+    if (doctors_decision) {
+        request.pid = patient->pid;
+        sprintf(request.password, "%d", request.index); // (index will be changed, password is unnecessary)
+        request.typ = request.index + 20;                       // ACCEPT_X
+        msgsnd(msgid, &request, MSGBUF_SIZE, 0);
+        printf("\tYou have to wait for doctor's acceptation.\n");
+        msgrcv(msgid, &request, MSGBUF_SIZE , patient->pid, 0); // dałam pid!!!!!!!!!!!!!!!
+        if (request.index == 1000) {
+            printf("\tSorry. Doctor hasn't accepted your visit.\n");
+            return false;
+        }
+        else printf("\tDoctor has accepted your visit.\n");
+    }
     // SENDING MSG WITH NEW APPOINTMENT
     request.pid = patient->pid;
     sprintf(request.password, "%d", request.index); // (index will be changed, password is unnecessary)
     request.typ = pid_registration;
     msgsnd(msgid, &request, MSGBUF_SIZE, 0);
     printf("// wysłałem nowy appointment\n");
-    return;
+    return true;
 }
 
 
@@ -411,12 +404,12 @@ void changeDateOfVisit(int msgid, struct msgbuf* patient) {
         }
         else if (choice == 'Y') {
             printf("\tThis visit will be changed!\n");
-            // choose day:
-            // make calendar for thid day:
-            // display this day:
-            // make an appointment for this day:
-            makeAnAppointment(msgid, patient, NEW_VISIT);
-            // delete old date:
+            printf("\tRegistation will choose the date for you.\n");
+            printf("\tRemember that doctor has to accept your visit.\n");
+            patient->pid = getpid();
+            patient->typ = CHANGE_VISIT;
+            msgsnd(msgid, &del_appointment, MSGBUF_SIZE, 0);
+
             return;
         }
     }
@@ -426,5 +419,70 @@ void displayInstruction() {
     printf("\tIf you want to logout, enter 'q'.\n");
     printf("\tIf you want to display list of free doctors for concrete date, enter 'd'.\n");
     printf("\tIf you want to display the status of your appointments, enter 's'.\n");
-    printf("\tIf you want to cancel visit, enter 'c'.");
+    printf("\tIf you want to cancel visit, enter 'c'.\n");
+    printf("\tIf you want to change date of your visit, enter 'v': ");
 }
+
+void createMonth(char (*day), int width, int height, time_t date) {
+//    struct tm chosenDate;
+//    chosenDate = *localtime(&date);
+//    // 0=sunday, 1=monday...
+//    int day_type = chosenDate.tm_wday;
+//    // 1=january...
+//    int month_type = chosenDate.tm_mon + 1;
+//    int day_amount;
+//    if (month_type == 2) {
+//        day_amount = 28;
+//    }
+//    else if (month_type == 1 || month_type == 3 || month_type == 5 || month_type == 7 ||
+//             month_type == 8 || month_type == 10 || month_type == 12) {
+//        day_amount = 31;
+//    }
+//    else day_amount = 30;
+    return;
+}
+
+//            int pid_registration;
+//            int pid_patient = getpid();
+//            // CHOOSING DATE
+//            chooseDate(patient);
+//            printf("------------------------\n");
+//            printf("FREE DOCTORS AT: %s\n", ctime(&patient->date_of_visit));
+//            printf("------------------------\n");
+//            printf("\tThe list of free appointments:\n");
+//            patient->pid = pid_patient;
+//            patient->typ = DOCTORS_REQUEST;
+//            msgsnd(msgid, patient, MSGBUF_SIZE, 0);
+//            // CREATING DAY FROM CALENDAR
+//            clearCalendar(&day);
+//            // READING FREE APPOINTMENTS
+//            struct msgbuf request;
+//            // receiving appointments:
+//            do {
+//                msgrcv(msgid, &request, MSGBUF_SIZE, pid_patient, 0);
+//                pid_registration = request.pid;
+//                if (request.index == 1000) {
+//                    break;
+//                }
+//                printf("// DOCTORS_ANSWER:\n");
+//                addAppointmentToCalendar(patient, request);
+//            } while (1);
+//            // receiving holidays:
+//            do {
+//                msgrcv(msgid, &request, MSGBUF_SIZE, pid_patient, 0);
+//                pid_registration = request.pid;
+//                if (request.index == 1000) {
+//                    break;
+//                }
+//                printf("// DOCTORS_ANSWER2:\n");
+//                request.typ = D_LEAVE;
+//                addAppointmentToCalendar(patient, request);
+//            } while (1);
+//            displayCalendar(&day, 5, 13);
+//            // ograniczenie jednym znakiem, ograniczenie że liczby albo q, password size
+//            // MAKING AN APPOINTMENT
+//            // patient has to be active until he receive the answer from doctor
+//            bool approved_date = makeAnAppointment(msgid, patient, pid_registration, true);
+//            if (approved_date) {
+//                cancelVisit(msgid, &del_appointment);
+//            }

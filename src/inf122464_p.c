@@ -69,6 +69,10 @@ int main() {
                     cancelVisit(msgid, &patient);
                     displayInstruction();
                 }
+                else if (decision == 'v') {
+                    changeDateOfVisit(msgid, &patient);
+                    displayInstruction();
+                }
             }
         }
     }

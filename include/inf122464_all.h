@@ -16,15 +16,13 @@
 #define NEW_VISIT           13
 #define D_LEAVE             14
 
-// odbiera pacjent
-//#define LOGIN_ANSWER        1
-//#define DOCTORS_ANSWER      1
-//#define APPOINTMENT_ANSWER  1
-//#define M_END               2
-
 // odbiera lekarz
+#define ACCEPT_0            20
+#define ACCEPT_1            21
+#define ACCEPT_2            22
+#define ACCEPT_3            23
+#define ACCEPT_4            24
 
-//
 
 #define MSGBUF_SIZE         136
 #define MSGBUF_SIZE2        112

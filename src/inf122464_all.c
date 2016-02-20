@@ -162,7 +162,7 @@ void readConfigurationFile(char file_name[30]) {
         int date;
         fscanf(fp, "%d", &date);
         object.date_of_visit = (time_t)date;
-        printf("%s", ctime( & object.date_of_visit));
+        //printf("%s", ctime( & object.date_of_visit));
         fscanf(fp, "%d", &object.time_of_visit);
         // ADDING TO ARRAYS
         int type_p = PATIENT_TYPE;

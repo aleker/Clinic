@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
 // #include <fcntl.h>
@@ -36,12 +37,79 @@ void searchForOutdatedAppointments() {
     return;
 }
 
+
 void answerForChangeDateOfVisit(int msgid, int msgrcv_size, struct msgbuf old_appointment) {
     struct msgbuf new_date;
     msgrcv_size = msgrcv(msgid, &new_date, MSGBUF_SIZE, CHANGE_VISIT, IPC_NOWAIT);
     if (msgrcv_size > 0) {
         if (fork() == 0) {
-            // TODO
+            // choose doctor
+            int i;
+            int meetings[5];
+            for (i = 0; i < 5; i++) { meetings[i] = 0;}
+            // if (appointments_list_size > 0)
+            for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
+                if (appointments_list[i].time_of_visit <= 0) continue;
+                int index = atoi(appointments_list[i].password);
+                printf("//index = %d\n", index);
+                meetings[index]++;
+            }
+            int min_meetings_index = meetings[0];
+            for (i = 1; i < 5; i++) {
+                if (meetings[i] < meetings[i-1])
+                    min_meetings_index = meetings[i];
+            }
+            // CHOOSING TIME
+            // set tomorrow's date
+            struct tm tomorrow_date;
+            const int one_day = 86400;
+            time_t tomorrow = today + one_day;
+            tomorrow_date = *localtime(&tomorrow);
+            tomorrow_date.tm_hour = 8; // 0-23
+            tomorrow_date.tm_min = 0;
+            tomorrow_date.tm_sec = 0;
+            tomorrow = mktime(&tomorrow_date);
+            bool founded_date = false;
+            while (!founded_date) {
+                for (i = 8;( i = 21 - new_date.time_of_visit); i++) {
+                    tomorrow_date.tm_hour = i;
+                    tomorrow = mktime(&tomorrow_date);
+                    int j;
+                    bool search = true;
+                    for (j = 0; j < APPOINTMENTS_LIST_SIZE; j++) {
+                        if (atoi(appointments_list[j].password) == min_meetings_index) {
+                            //founded choosen doctor
+                            time_t actual = tomorrow;
+                            int duration = new_date.time_of_visit;
+                            while (duration > 0) {
+                                if (actual == appointments_list[j].date_of_visit ||
+                                        actual < (appointments_list[j].date_of_visit + appointments_list[j].time_of_visit)) {
+                                    search = false;
+                                    break;
+                                }
+                                actual += 3600;
+                                duration --;
+                            }
+                            if (!search) break;
+                        }
+                    }
+                    if (search) {               // przeszedł wszystkie spotkania z tym lekarzem i OK
+                        founded_date = true;
+                        break;
+                    }
+                }
+                tomorrow += one_day;
+                tomorrow_date = *localtime(&tomorrow);
+            }
+            // SENDING MEETING TO DOCTOR FOR ACCEPTATION
+            //itoa(min_meetings_index, &new_date.password, 10);
+            sprintf(new_date.password,"%d", min_meetings_index);
+            new_date.date_of_visit = tomorrow;
+            strcpy(new_date.name, doctors_list[min_meetings_index].name);
+            strcpy(new_date.surname, doctors_list[min_meetings_index].surname);
+            new_date.typ = min_meetings_index + 20;
+            msgsnd(msgid, &new_date, MSGBUF_SIZE, 0);
+            exit(getpid());
         }
     }
     return;
@@ -414,7 +482,7 @@ void searchForNewAppointment(int msgid, int msgrcv_size) {
     struct msgbuf appointment;
     int pid_registration = getpid();
     msgrcv_size = msgrcv(msgid, &appointment, MSGBUF_SIZE, pid_registration, IPC_NOWAIT);
-    // from pacient when he want to change the date of visit:
+    // from doctor when he want to change the date of visit:
     if (msgrcv_size <= 0) msgrcv_size = msgrcv(msgid, &appointment, MSGBUF_SIZE, NEW_VISIT, IPC_NOWAIT);
     if (msgrcv_size > 0) {
         bool ready;
