@@ -42,7 +42,6 @@ int main() {
             printf("------------\n");
             printf("HELLO %s!\n", doctor.name);
             printf("------------\n");
-            printf("// Test: %c\n", doctor.test);
             displayInstruction();
             while (true) {
                 char decision;

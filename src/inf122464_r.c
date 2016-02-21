@@ -18,9 +18,6 @@ int main() {
     appointments_list_size = 0;
     quit = false;
     readConfigurationFile("ConfigurationFile.bat");
-    struct msgbuf test;
-    printf("// rozmiar msgbuf: %d\n", (int)sizeof(test));
-
     int msgrcv_size = 0;
     int msgid = createMessageQueue("REGISTRATION");
 
@@ -64,10 +61,8 @@ int main() {
     // FOR PARENT:
     else {
         struct msgbuf child_info;
-        //int my_child_pid;
         int my_pid = getpid();
         msgrcv(msgid, &child_info, MSGBUF_SIZE, my_pid, 0);
-        //my_child_pid = child_info.pid;
 
         while (!quit) {
             char decision;

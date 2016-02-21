@@ -32,7 +32,6 @@ void displayVisit(struct msgbuf* patient, struct msgbuf* visit) {
     printf("\t-----------------------------------------\n");
 }
 
-// TODO ! blokowanie konta po k próbach logowania
 struct msgbuf login(int msgid, int type) {
     struct msgbuf request;
     int pid_user = getpid(); // pid of user (patient or doctor)
@@ -81,7 +80,6 @@ struct msgbuf login(int msgid, int type) {
         request.pid = pid_user;
         msgsnd(msgid, &request, MSGBUF_SIZE, 0);
         msgrcv(msgid, &request, MSGBUF_SIZE, pid_user, 0);
-        printf("//dostałem wiadomosc\n");
         if (request.index == 1000) {
             appropriate = false;
             printf("\tThe log in wasn't successful. Do you want to try to log in again? Write 'y' if yes or 'n' if no: ");
@@ -155,7 +153,7 @@ void readConfigurationFile(char file_name[30]) {
     char c;
     fp = fopen(file_name, "r");
         if (fp == NULL) {
-        perror("// The file is not good\n");
+        perror("\tThe file is not good!\n");
         return;
     }
     // fgets make first line unread
@@ -181,7 +179,7 @@ void readConfigurationFile(char file_name[30]) {
         int date;
         fscanf(fp, "%d", &date);
         object.date_of_visit = (time_t)date;
-        printf("%s", ctime( & object.date_of_visit));
+        //printf("%s", ctime( & object.date_of_visit));
         fscanf(fp, "%d", &object.time_of_visit);
         // ADDING TO ARRAYS
         int type_p = PATIENT_TYPE;
@@ -190,17 +188,17 @@ void readConfigurationFile(char file_name[30]) {
         if (object.typ == type_p) {
             patients_list_size++;
             patients_list[patients_list_size - 1] = object;
-            //printf("// Dodałem pacjenta %d, pas: %s, pesel: %d\n", patients_list_size, object.password, object.pesel[10]);
+            //printf("// Added patient %d, pas: %s, pesel: %d\n", patients_list_size, object.password, object.pesel[10]);
         }
         else if (object.typ == type_d) {
             doctors_list_size++;
             doctors_list[doctors_list_size - 1] = object;
-            //printf("// Dodałem lekarza %d, pas: %s\n", doctors_list_size, object.password);
+            //printf("// Added doctor %d, pas: %s\n", doctors_list_size, object.password);
         }
         else if (object.typ == type_a) {
             appointments_list_size++;
             appointments_list[appointments_list_size - 1] = object;
-            //printf("// Dodałem spotkanie %d\n", appointments_list_size);
+            //printf("// Added appointment %d\n", appointments_list_size);
         }
     }
     fclose(fp);

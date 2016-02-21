@@ -2,7 +2,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
-// #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -20,7 +19,6 @@ void searchForOutdatedAppointments() {
     for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
         if (appointments_list[i].time_of_visit == 0) continue; // free space
         if ((appointments_list[i].date_of_visit)  < now) {
-            printf("//usuwam przeterminowany appointment\n");
             appointments_list[i].time_of_visit = 0;
             appointments_list_size--;
         }
@@ -28,7 +26,6 @@ void searchForOutdatedAppointments() {
     for (i = 0; i < 5; i++) {
         if (vacation_list[i].index == i) {
             if ((vacation_list[i].date_of_visit + (vacation_list[i].time_of_visit * 86400)) < now) {
-                printf("//usuwam przeterminowane wakacje\n");
                 vacation_list[i].index = -1;
             }
         }
@@ -43,7 +40,6 @@ void answerForChangeDateOfVisit(int msgid) {
     if (msgrcv_size > 0) {
         printf("%s", ctime( & new_date.date_of_visit));
         if (fork() == 0) {
-            printf("//forknąłem answerForChangeDateOfVisit! %d\n", getpid());
             // choose doctor
             int i;
             int meetings[5];
@@ -52,19 +48,15 @@ void answerForChangeDateOfVisit(int msgid) {
             for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
                 if (appointments_list[i].time_of_visit <= 0) continue;
                 int index = atoi(appointments_list[i].password);
-                printf("//index = %d\n", index);
                 meetings[index] += appointments_list[i].time_of_visit;
             }
             int min_meetings_index = meetings[0];
-            printf("// meetings[0] = %d\n", meetings[0]);
             for (i = 1; i < 5; i++) {
-                printf("// meetings[%d] = %d\n", i, meetings[i]);
                 if (meetings[i] < meetings[i-1])
                     min_meetings_index = i;
             }
             // CHOOSING TIME
             // set tomorrow's date
-            printf("// wybrany min index = %d\n", min_meetings_index);
             struct tm tomorrow_date;
             const int one_day = 86400;
             time_t tomorrow = today;
@@ -77,8 +69,6 @@ void answerForChangeDateOfVisit(int msgid) {
             tomorrow_date.tm_min = 0;
             tomorrow_date.tm_sec = 0;
             tomorrow = mktime(&tomorrow_date);
-            printf ("//jutro to %s\n", ctime( & tomorrow ));
-            printf("//wybieramy czas\n");
 
             int time_difference = (int)difftime(last_date,tomorrow);
             bool founded_date;
@@ -86,7 +76,6 @@ void answerForChangeDateOfVisit(int msgid) {
             srand(time(NULL));
             while (!founded_date) {
                 founded_date = true;
-                //srand(time(NULL));
                 int rand_add = rand() % time_difference + 1;
                 rand_date = tomorrow + rand_add;
                 tomorrow_date = *localtime(&rand_date);
@@ -95,11 +84,8 @@ void answerForChangeDateOfVisit(int msgid) {
                 tomorrow_date.tm_min = 0;
                 tomorrow_date.tm_sec = 0;
                 rand_date = mktime(&tomorrow_date);
-                printf ("//rand_date to %s\n", ctime( & rand_date ));
                 if (tomorrow_date.tm_wday != 6 && tomorrow_date.tm_wday != 0) {
-                    bool the_same_pesel;
                     for(i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
-                        the_same_pesel = true;
                         int j;
                         bool the_same_pesel = true;
                         for (j = 0; j < 11; j++) {
@@ -119,7 +105,6 @@ void answerForChangeDateOfVisit(int msgid) {
                                 rand_date >= vacation_list[min_meetings_index].date_of_visit &&
                                 rand_date <= vacation_list[min_meetings_index].date_of_visit +
                                                      (86400*vacation_list[min_meetings_index].time_of_visit)) {
-                                printf("// ma wakacje!\n");
                                 founded_date = false;
                                 break;
                             }
@@ -150,7 +135,6 @@ void deleteReservedVisits(int msgid, struct msgbuf leave) {
                     appointments_list[i].date_of_visit <= end) {
                 if (leave.index == atoi(appointments_list[i].password)) {   // if ids of doctor are the same
                     // setting time_of_visit=0 -> deleting appointment
-                    printf("//usuwam wizytę %d\n", appointments_list_size);
                     appointments_list[i].time_of_visit = 0;
                     appointments_list_size--;
                 }
@@ -164,7 +148,6 @@ void answerForDoctorsLeave(int msgid) {
     struct msgbuf leave;
     int msgrcv_size = msgrcv(msgid, &leave, MSGBUF_SIZE , D_LEAVE, IPC_NOWAIT);
     if (msgrcv_size > 0) {
-        printf("// dodałem do vacation_list\n");
         vacation_list[leave.index] = leave;
         deleteReservedVisits(msgid, leave);
     }
@@ -178,7 +161,6 @@ void deleteVisit(int msgid, int msgrcv_size) {
         int i;
         for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
             if (appointment.index == appointments_list[i].index) {
-                printf("//usuwam wizytę %d\n", appointments_list_size);
                 appointments_list[i].time_of_visit = 0;
                 appointments_list_size--;
             }
@@ -195,17 +177,14 @@ void addPatient(int msgid, int msgrcv_size) {
         patients_list_size++;
         patient.index = patients_list_size - 1;
         patients_list[patients_list_size - 1] = patient;
-        printf("// New patient has been added.\n");
-        printf("// patients_list_size = %d\n", patients_list_size);
     }
     return;
 }
 
 void sendDayContent(int msgid, int msgrcv_size, int pid_registration, int pid_patient, struct msgbuf appointment) {
-    printf("//sendDayContent\n");
     struct tm appointmentDate = *localtime(&appointment.date_of_visit);
     time_t chosen_date = appointment.date_of_visit;
-    printf("%s", asctime( & appointmentDate ));
+    //printf("%s", asctime( & appointmentDate ));
     msgrcv_size = 0;
     int i;
     // SENDING REQUEST TO PARENT REGISTRATION
@@ -214,16 +193,13 @@ void sendDayContent(int msgid, int msgrcv_size, int pid_registration, int pid_pa
     msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
     appointments_list_size = 0;
     while (1) {
-        //printf("dostałem\n");
         msgrcv(msgid, &appointment, MSGBUF_SIZE, pid_registration, 0);
         if (appointment.index == 1000) {
             break;
         }
         appointments_list[appointments_list_size] = appointment;
-        printf("%d ", appointment.time_of_visit);
         if (appointment.time_of_visit > 0) appointments_list_size++;
     }
-    printf("// appointments_list_size %d\n", appointments_list_size);
 
     // SENDING INFO ABOUT APPOINTMENTS THAT DAY
     if (appointments_list_size > 0) {
@@ -237,17 +213,14 @@ void sendDayContent(int msgid, int msgrcv_size, int pid_registration, int pid_pa
                 appointment = appointments_list[i];
                 appointment.pid = pid_registration; //APPOINTMENT_ANSWER;
                 appointment.typ = pid_patient;
-                msgsnd(msgid, &appointment, MSGBUF_SIZE, 0); // blokująco
-                printf("// wysłałem appointment //APPOINTMENT_ANSWER\n");
+                msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
             }
-            //else printf("// This appointment is not in that day\n");
         }
     }
     appointment.pid = pid_registration;
     appointment.typ = pid_patient;
     appointment.index = 1000;
     msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
-    printf("// wysłałem M_END (pseudo)\n");
 
     // SENDING INFO ABOUT VACATION THAT DAY
     for (i = 0; i < 5; i++) {
@@ -260,7 +233,6 @@ void sendDayContent(int msgid, int msgrcv_size, int pid_registration, int pid_pa
                 appointment.pid = pid_registration;
                 appointment.typ = pid_patient;
                 msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
-                printf("// wysłałem2 vacation (pseudo)\n");
             }
         }
     }
@@ -268,7 +240,6 @@ void sendDayContent(int msgid, int msgrcv_size, int pid_registration, int pid_pa
     appointment.typ = pid_patient;
     appointment.index = 1000;
     msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
-    printf("// wysłałem2 M_END (pseudo)\n");
     return;
 }
 
@@ -278,7 +249,6 @@ void answerForListOfDoctors(int msgid, int msgrcv_size) {
     if (msgrcv_size > 0) {
         // CHILD REGISTRATION
         if (fork() == 0) {
-            printf("//forknalem answerForListDoctors %d\n", getpid());
             int pid_registration = getpid();
             int pid_patient = appointment.pid; // pid of patient
             // to fill in the content of day[][] array:
@@ -286,7 +256,6 @@ void answerForListOfDoctors(int msgid, int msgrcv_size) {
             // REGISTRATION TO DOCTOR:
             msgrcv(msgid, &appointment, MSGBUF_SIZE, pid_registration, 0);
             if (appointment.index == 1000) {
-                printf("// pacjent zrezygnował z zapisu do lekarza\n");
                 exit(pid_registration);
                 return;
             }
@@ -294,7 +263,6 @@ void answerForListOfDoctors(int msgid, int msgrcv_size) {
                 // SENDING APPOINTMENT TO PARENT REGISTRATION
                 appointment.typ = getppid();
                 msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
-                printf("// otrzymałem i wysłałem do rodzica nowy appointment\n");
             }
             exit(pid_registration);
         }
@@ -321,11 +289,8 @@ void answerForDoctorLoginRequest(int msgid, int msgrcv_size) {
     msgrcv_size = msgrcv(msgid, &doctor, MSGBUF_SIZE , D_LOGIN_REQUEST, IPC_NOWAIT);
     if (msgrcv_size > 0) {
         if (fork() == 0) {
-            printf("//forknalem answerForDoctorLoginRequest %d\n", getpid());
             int pid_registration = getpid();
             int pid_doctor = doctor.pid;
-
-            printf("// patients_list_size = %d\n", doctors_list_size);
             doctor.typ = pid_doctor;
             doctor.pid = pid_registration;
             if (doctors_list_size > 0) {
@@ -365,7 +330,6 @@ void answerForDoctorLoginRequest(int msgid, int msgrcv_size) {
                     for (j = 0; j < password_size; j++) {
                         if (doctor.password[j] != doctors_list[i].password[j]) {
                             // wrong password
-                            printf("// złe hasło, brak logowania\n");
                             doctor.index = 1000;
                             msgsnd(msgid, &doctor, MSGBUF_SIZE, 0);
                             exit(pid_registration);
@@ -373,9 +337,7 @@ void answerForDoctorLoginRequest(int msgid, int msgrcv_size) {
                         }
                     }
                     // good name, surname and password
-                    printf("// znalazłem takiego doktorka\n");
                     doctor = doctors_list[i];
-                    doctor.test = 'a';
                     doctor.typ = pid_doctor;
                     msgsnd(msgid, &doctor, MSGBUF_SIZE, 0);
                     exit(pid_registration);
@@ -385,7 +347,6 @@ void answerForDoctorLoginRequest(int msgid, int msgrcv_size) {
             // wrong pesel
             doctor.index = 1000;
             msgsnd(msgid, &doctor, MSGBUF_SIZE, 0);
-            printf("// wychodze exit(pid)\n");
             exit(pid_registration);
         }
     }
@@ -397,11 +358,9 @@ void answerForLoginRequest(int msgid, int msgrcv_size) {
     msgrcv_size = msgrcv(msgid, &patient, MSGBUF_SIZE , P_LOGIN_REQUEST, IPC_NOWAIT);
     if (msgrcv_size > 0) {
         if (fork() == 0) {
-            printf("//forknalem answerForLoginRequest %d\n", getpid());
             int pid_registration = getpid();
             int pid_patient = patient.pid;
 
-            printf("// patients_list_size = %d\n", patients_list_size);
             patient.typ = pid_patient;
             patient.pid = pid_registration;
             if (patients_list_size > 0) {
@@ -423,7 +382,6 @@ void answerForLoginRequest(int msgid, int msgrcv_size) {
                     if (!appropriate) continue;
                     for (j = 0; j < password_size; j++) {
                         if (patient.password[j] != patients_list[i].password[j]) {
-                            printf("// złe hasło, brak logowania\n");
                             patient.index = 1000;
                             msgsnd(msgid, &patient, MSGBUF_SIZE, 0);
                             exit(pid_registration);
@@ -431,9 +389,7 @@ void answerForLoginRequest(int msgid, int msgrcv_size) {
                         }
                     }
                     // good pesel and password
-                    printf("// znalazłem takiego ziomka\n");
                     patient = patients_list[i];
-                    patient.test = 'a';
                     patient.typ = pid_patient;
                     msgsnd(msgid, &patient, MSGBUF_SIZE, 0);
                     exit(pid_registration);
@@ -443,7 +399,6 @@ void answerForLoginRequest(int msgid, int msgrcv_size) {
             // wrong pesel
             patient.index = 1000;
             msgsnd(msgid, &patient, MSGBUF_SIZE, 0);
-            printf("// wychodze exit(pid)\n");
             exit(pid_registration);
         }
     }
@@ -455,7 +410,6 @@ void answerForListOfVisits(int msgid, int msgrcv_size) {
     msgrcv_size = msgrcv(msgid, &visit, MSGBUF_SIZE , VISITS_REQUEST, IPC_NOWAIT);
     if (msgrcv_size > 0) {
         if (fork() == 0) {
-            printf("//forknalem answerForListOfVisits %d\n", getpid());
             int pid_registration = getpid();
             int pid_patient = visit.pid;
 
@@ -472,7 +426,6 @@ void answerForListOfVisits(int msgid, int msgrcv_size) {
                     appropriate = true;
                 }
                 if (appropriate && appointments_list[i].time_of_visit > 0) {
-                    printf("//wysyłam appointment\n");
                     appointment = appointments_list[i];
                     appointment.typ = pid_patient;
                     msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
@@ -481,13 +434,11 @@ void answerForListOfVisits(int msgid, int msgrcv_size) {
             appointment.index = 1000;
             appointment.pid = pid_registration;
             appointment.typ = pid_patient;
-            printf("//już nie ma więcej appointmentów\n");
             msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
 
             // INFORMATION ABOUT ONE CHOSEN APPOINTMENT
             msgrcv(msgid, &visit, MSGBUF_SIZE , pid_registration, 0);
             if (visit.index == 1000) {   // resignation
-                printf("//zrezygnował z wyświetlania\n");
                 exit(pid_registration);
                 return;
             }
@@ -507,7 +458,6 @@ void answerForListOfVisits(int msgid, int msgrcv_size) {
                 if (appropriate && appointments_list[i].time_of_visit > 0 && counter == number) {
                     appointment = appointments_list[i];
                     appointment.typ = pid_patient;
-                    appointment.test = 'a';
                     msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
                     exit(pid_registration);
                     return;
@@ -524,7 +474,6 @@ void answerForDoctorListOfVisits(int msgid, int msgrcv_size) {
     msgrcv_size = msgrcv(msgid, &visit, MSGBUF_SIZE, D_VISITS_REQUEST, IPC_NOWAIT);
     if (msgrcv_size > 0) {
         if (fork() == 0) {
-            printf("//forknalem answerForDoctorListOfVisits %d\n", getpid());
             int pid_registration = getpid();
             int pid_doctor = visit.pid;
 
@@ -535,7 +484,6 @@ void answerForDoctorListOfVisits(int msgid, int msgrcv_size) {
                 appropriate = true;
                 if (atoi(appointments_list[i].password) != visit.index) appropriate = false;
                 if (appropriate && appointments_list[i].time_of_visit > 0) {
-                    printf("//wysyłam appointment\n");
                     appointment = appointments_list[i];
                     // sending name and surname of patient:
                     int j;
@@ -562,7 +510,6 @@ void answerForDoctorListOfVisits(int msgid, int msgrcv_size) {
             appointment.index = 1000;
             appointment.pid = pid_registration;
             appointment.typ = pid_doctor;
-            printf("//już nie ma więcej appointmentów\n");
             msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
 
             exit(pid_registration);
@@ -575,7 +522,7 @@ void searchForNewAppointment(int msgid, int msgrcv_size) {
     struct msgbuf appointment;
     int pid_registration = getpid();
     msgrcv_size = msgrcv(msgid, &appointment, MSGBUF_SIZE, pid_registration, IPC_NOWAIT);
-    // from doctor when he want to change the date of visit:
+    // from doctor when he wants to change the date of visit:
     if (msgrcv_size <= 0) msgrcv_size = msgrcv(msgid, &appointment, MSGBUF_SIZE, NEW_VISIT, IPC_NOWAIT);
     if (msgrcv_size > 0) {
         // ADDING NAMES AND SURNAMES
@@ -592,7 +539,6 @@ void searchForNewAppointment(int msgid, int msgrcv_size) {
                 appointments_list[i] = appointment;
                 appointments_list_size++;
                 ready = true;
-                printf("// Dodałem spotkanie %d\n", appointments_list_size);
             }
         }
     }

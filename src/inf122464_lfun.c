@@ -2,7 +2,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
-// #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -12,7 +11,6 @@
 
 #include"inf122464_all.h"
 #include"inf122464_lfun.h"
-
 
 void displayInstruction() {
     printf("\tIf you want to logout, enter 'q'.\n");
@@ -61,7 +59,6 @@ void takeLeave(int msgid, struct msgbuf* doctor) {
         if (chosenTime >= today && chosenTime <= last_date) appropriate = true;
         else printf("\tYour starting date is not in range!\n\n");
     } while (!appropriate);
-    //printf("\t%s", ctime(&chosenTime));
     printf("\t%d.%d.%d\n\n", day, month, year);
 
     // CHOOSING ENDING DATE

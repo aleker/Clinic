@@ -1,4 +1,3 @@
-// #include<fcntl.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -34,7 +33,6 @@ int main() {
             }
             else if (choice == 'r') {
                 patient = registerNewPatient(msgid);
-                // TODO nie zawsze log_on przy rejestrowaniu nowego pacjenta
                 log_on = true;
             }
             else if (choice == 'l') {
@@ -48,7 +46,6 @@ int main() {
             printf("------------\n");
             printf("HELLO %s!\n", patient.name);
             printf("------------\n");
-            printf("// Test: %c\n", patient.test);
             displayInstruction();
             while (true) {
                 char decision;
