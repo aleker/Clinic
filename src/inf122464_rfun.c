@@ -54,16 +54,18 @@ void answerForChangeDateOfVisit(int msgid) {
                 if (appointments_list[i].time_of_visit <= 0) continue;
                 int index = atoi(appointments_list[i].password);
                 printf("//index = %d\n", index);
-                meetings[index]++;
+                meetings[index] += appointments_list[i].time_of_visit;
             }
             int min_meetings_index = meetings[0];
+            printf("// meetings[0] = %d\n", meetings[0]);
             for (i = 1; i < 5; i++) {
+                printf("// meetings[%d] = %d\n", i, meetings[i]);
                 if (meetings[i] < meetings[i-1])
-                    min_meetings_index = meetings[i];
+                    min_meetings_index = i;
             }
             // CHOOSING TIME
             // set tomorrow's date
-            printf("// wybrany index = %d\n", min_meetings_index);
+            printf("// wybrany min index = %d\n", min_meetings_index);
             struct tm tomorrow_date;
             const int one_day = 86400;
             time_t tomorrow = today;
@@ -82,9 +84,10 @@ void answerForChangeDateOfVisit(int msgid) {
             int time_difference = (int)difftime(last_date,tomorrow);
             bool founded_date;
             time_t rand_date;
+            srand(time(NULL));
             while (!founded_date) {
                 founded_date = true;
-                srand(time(NULL));
+                //srand(time(NULL));
                 int rand_add = rand() % time_difference + 1;
                 rand_date = tomorrow + rand_add;
                 tomorrow_date = *localtime(&rand_date);
@@ -108,12 +111,15 @@ void answerForChangeDateOfVisit(int msgid) {
                         }
                         if (appointments_list[i].index == min_meetings_index || the_same_pesel) {
                             if (rand_date >= appointments_list[i].date_of_visit &&
-                                rand_date <= appointments_list[i].date_of_visit + (86400*appointments_list[i].time_of_visit)) {
+                                rand_date <= appointments_list[i].date_of_visit +
+                                                     (86400*appointments_list[i].time_of_visit)) {
                                 founded_date = false;
                                 break;
                             }
-                            if (rand_date >= vacation_list[min_meetings_index].date_of_visit &&
-                                rand_date <= vacation_list[min_meetings_index].date_of_visit + (86400*vacation_list[min_meetings_index].time_of_visit)) {
+                            if (vacation_list[min_meetings_index].index == min_meetings_index &&
+                                rand_date >= vacation_list[min_meetings_index].date_of_visit &&
+                                rand_date <= vacation_list[min_meetings_index].date_of_visit +
+                                                     (86400*vacation_list[min_meetings_index].time_of_visit)) {
                                 printf("// ma wakacje!\n");
                                 founded_date = false;
                                 break;
