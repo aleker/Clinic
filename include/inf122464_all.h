@@ -11,6 +11,7 @@
 #define LOGOUT              8
 #define QUIT                9
 #define VISITS_REQUEST      10
+#define D_VISITS_REQUEST    15
 #define CHANGE_VISIT        11
 #define DELETE_VISIT        12
 #define NEW_VISIT           13

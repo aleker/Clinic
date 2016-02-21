@@ -54,6 +54,7 @@ int main() {
             answerForListOfDoctors(msgid, msgrcv_size);
             // LIST OF VISITS REQUEST
             answerForListOfVisits(msgid, msgrcv_size);
+            answerForDoctorListOfVisits(msgid, msgrcv_size);
             // CHECK IF QUIT
             quit = checkExit(msgid);
         }

@@ -32,6 +32,7 @@ void displayVisit(struct msgbuf* patient, struct msgbuf* visit) {
     printf("\t-----------------------------------------\n");
 }
 
+// TODO ! blokowanie konta po k próbach logowania
 struct msgbuf login(int msgid, int type) {
     struct msgbuf request;
     int pid_user = getpid(); // pid of user (patient or doctor)

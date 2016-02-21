@@ -12,7 +12,6 @@
 #include "inf122464_all.h"
 #include "inf122464_lfun.h"
 
-// TODO ! wyswietlanie wizyt
 int main() {
     int msgid = createMessageQueue("DOCTOR");
     clearCalendar(&day);
@@ -53,8 +52,12 @@ int main() {
                     printf("\tYou've logout successfully\n");
                     break;
                 }
-                else if (decision == 'l') {
+                else if (decision == 'v') {
                     takeLeave(msgid, &doctor);
+                    displayInstruction();
+                }
+                else if (decision == 'l') {
+                    displayAllYourVisits(msgid, doctor);
                     displayInstruction();
                 }
             }

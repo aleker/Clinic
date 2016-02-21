@@ -13,7 +13,6 @@
 #include "inf122464_all.h"
 #include "inf122464_rfun.h"
 
-// TODO ! usuwanie przeterminowanych spotkań (nie działa) i przeterminowanych wakacji (index -> -1)
 void searchForOutdatedAppointments() {
     time_t now;
     time(&now);
@@ -514,6 +513,58 @@ void answerForListOfVisits(int msgid, int msgrcv_size) {
                     return;
                 }
             }
+            exit(pid_registration);
+        }
+    }
+    return;
+}
+
+void answerForDoctorListOfVisits(int msgid, int msgrcv_size) {
+    struct msgbuf visit, appointment;
+    msgrcv_size = msgrcv(msgid, &visit, MSGBUF_SIZE, D_VISITS_REQUEST, IPC_NOWAIT);
+    if (msgrcv_size > 0) {
+        if (fork() == 0) {
+            printf("//forknalem answerForDoctorListOfVisits %d\n", getpid());
+            int pid_registration = getpid();
+            int pid_doctor = visit.pid;
+
+            // SENDING ALL APPOINTMENTS
+            int i;
+            bool appropriate;
+            for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
+                appropriate = true;
+                if (atoi(appointments_list[i].password) != visit.index) appropriate = false;
+                if (appropriate && appointments_list[i].time_of_visit > 0) {
+                    printf("//wysyłam appointment\n");
+                    appointment = appointments_list[i];
+                    // sending name and surname of patient:
+                    int j;
+                    bool founded;
+                    for (j = 0; j < patients_list_size; j++) {
+                        founded = true;
+                        int i;
+                        for (i = 0; i < 11; i++) {
+                            if (appointment.pesel[i] != patients_list[j].pesel[i]) {
+                                founded = false;
+                                break;
+                            }
+                        }
+                        if (founded) {
+                            strcpy(appointment.name, patients_list[j].name);
+                            strcpy(appointment.surname, patients_list[j].surname);
+                            break;
+                        }
+                    }
+                    appointment.typ = pid_doctor;
+                    msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
+                }
+            }
+            appointment.index = 1000;
+            appointment.pid = pid_registration;
+            appointment.typ = pid_doctor;
+            printf("//już nie ma więcej appointmentów\n");
+            msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
+
             exit(pid_registration);
         }
     }

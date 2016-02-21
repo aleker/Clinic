@@ -431,6 +431,7 @@ void displayInstruction() {
     printf("\tIf you want to change date of your visit, enter 'v': ");
 }
 
+// TODO ! wyswietlanie wolnych terminów do lekarza
 void createMonth(char (*day), int width, int height, time_t date) {
 //    struct tm chosenDate;
 //    chosenDate = *localtime(&date);

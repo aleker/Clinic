@@ -29,6 +29,7 @@ void answerForListOfDoctors(int msgid, int msgrcv_size);
 void answerForDoctorLoginRequest(int msgid, int msgrcv_size);
 void answerForLoginRequest(int msgid, int msgrcv_size);
 void answerForListOfVisits(int msgid, int msgrcv_size);
+void answerForDoctorListOfVisits(int msgid, int msgrcv_size);
 bool checkExit(int msgid);
 
     

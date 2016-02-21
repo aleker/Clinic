@@ -5,5 +5,6 @@ bool quit;
 
 void displayInstruction();
 void takeLeave(int msgid, struct msgbuf* doctor);
+void displayAllYourVisits(int msgid, struct msgbuf doctor);
 
 #endif

@@ -16,16 +16,14 @@
 
 void displayInstruction() {
     printf("\tIf you want to logout, enter 'q'.\n");
-    printf("\tIf you want to take a leave, enter 'l': ");
+    printf("\tIf you want to view list of your appointments, enter 'l'.\n");
+    printf("\tIf you want to take a leave, enter 'v': ");
     return;
 }
 
 void takeLeave(int msgid, struct msgbuf* doctor) {
     struct msgbuf leave;
     leave = *doctor;
-    //leave.index = doctor->index;
-    //leave.name = doctor->name;
-    //leave.surname = doctor->surname;
     leave.typ = D_LEAVE;
 
     time_t chosenTime;
@@ -118,4 +116,36 @@ void takeLeave(int msgid, struct msgbuf* doctor) {
             return;
         }
     }
+}
+
+void displayAllYourVisits(int msgid, struct msgbuf doctor) {
+    int my_pid = getpid();
+    int visit_counter = 0;
+    struct msgbuf visit;
+    visit.index = doctor.index;
+    visit.typ = D_VISITS_REQUEST;
+    visit.pid = my_pid;
+    msgsnd(msgid, &visit, MSGBUF_SIZE, 0);
+    printf("\n\tLIST OF YOUR VISITS:\n");
+    printf("\t-----------------------------------------\n");
+    while (true) {
+        msgrcv(msgid, &visit, MSGBUF_SIZE , my_pid, 0);
+        if (visit.index == 1000) {
+            break;
+        }
+        else {
+            visit_counter++;
+            printf("\t%d\n", visit_counter);
+            int i;
+            for (i = 0; i < 11; i++) {
+                doctor.pesel[i] = visit.pesel[i];
+            }
+            doctor.date_of_visit = visit.date_of_visit;
+            doctor.time_of_visit = visit.time_of_visit;
+            displayVisit(&visit, &doctor);
+            //printf("\t%d %s", *visit_counter, ctime( &visit.date_of_visit));
+        }
+    }
+
+    return;
 }
