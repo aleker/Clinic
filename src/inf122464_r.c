@@ -18,6 +18,7 @@ int main() {
     appointments_list_size = 0;
     quit = false;
     readConfigurationFile("ConfigurationFile.bat");
+    struct msgbuf test;
     int msgrcv_size = 0;
     int msgid = createMessageQueue("REGISTRATION");
 

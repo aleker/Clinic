@@ -16,16 +16,11 @@
 #define DELETE_VISIT        13
 #define NEW_VISIT           14
 #define D_LEAVE             15
-// receiving by doctor:
-#define ACCEPT_0            20
-#define ACCEPT_1            21
-#define ACCEPT_2            22
-#define ACCEPT_3            23
-#define ACCEPT_4            24
 
-#define MSGBUF_SIZE         136
+#define MSGBUF_SIZE         128 //136
 #define PASSWORD_SIZE       10
 #define MAX_LOG_COUNTER     3
+#define SEC_COMFIRM         60
 
 struct msgbuf {
         long typ;
@@ -37,7 +32,7 @@ struct msgbuf {
         char password[PASSWORD_SIZE];
         int time_of_visit;
         time_t date_of_visit;
-        char test;
+        //char test;
     };
 time_t today;
 time_t last_date;
