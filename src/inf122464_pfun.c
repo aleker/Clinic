@@ -154,7 +154,7 @@ void requestForDoctorsList(int msgid, struct msgbuf* patient) {
     } while (1);
     displayCalendar(&day, 5, 13);
     while (true) {
-        printf("\n\tWrite 'a' to make an appointment or 'q' to go to main menu\n");
+        printf("\n\tWrite 'a' to make an appointment or 'q' to go to main menu: ");
         char choice;
         scanf("%s", &choice);
         if (choice == 'q') {
@@ -188,6 +188,10 @@ bool makeAnAppointment(int msgid, struct msgbuf* patient, int pid_registration, 
             printf("\tEnter the id of doctor: ");
             scanf("%s", request.password);
             request.index = atoi(request.password);
+            if (day[3][request.index] == 'X') {
+                printf("\tThat time doctor is absent!\n");
+                request.index = -1;
+            }
         } while (request.index < 0 || request.index > 5);
         printf("\tEnter the duration of visit (in hours): ");
         scanf("%d", &request.time_of_visit);

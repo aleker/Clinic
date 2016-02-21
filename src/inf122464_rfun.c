@@ -129,7 +129,7 @@ void answerForChangeDateOfVisit(int msgid) {
 void deleteReservedVisits(int msgid, struct msgbuf leave) {
     int i;
     for (i = 0; i < APPOINTMENTS_LIST_SIZE; i++) {
-        if (appointments_list[i].time_of_visit > 1) {
+        if (appointments_list[i].time_of_visit > 0) {
             time_t end = leave.date_of_visit + (leave.time_of_visit * 86400);
             if (appointments_list[i].date_of_visit >= leave.date_of_visit &&
                     appointments_list[i].date_of_visit <= end) {
@@ -227,7 +227,7 @@ void sendDayContent(int msgid, int msgrcv_size, int pid_registration, int pid_pa
         if (vacation_list[i].index == i) {
             time_t start = vacation_list[i].date_of_visit;
             time_t end = vacation_list[i].date_of_visit + (vacation_list[i].time_of_visit * 86400);
-            if (chosen_date > start && chosen_date < end) {
+            if (chosen_date >= start && chosen_date < end) {
                 appointment = vacation_list[i];
                 appointment.time_of_visit = 13;
                 appointment.pid = pid_registration;

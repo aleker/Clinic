@@ -96,10 +96,10 @@ void takeLeave(int msgid, struct msgbuf* doctor) {
     printf("\t%d.%d.%d\n\n", day2, month2, year2);
 
     leave.date_of_visit = chosenTime;
-    leave.time_of_visit = (difftime(chosenTime2, chosenTime) / 86400);     // in days;
+    leave.time_of_visit = (difftime(chosenTime2, chosenTime) / 86400) + 1;     // in days;
     printf("\tDays of leave: %d\n", leave.time_of_visit);
     while (true) {
-        printf("\tAre you sure you want to take a holday? (Y/N): ");
+        printf("\tAre you sure you want to take a holiday? (Y/N): ");
         char decision;
         scanf("%s", &decision);
         if (decision == 'N') {
