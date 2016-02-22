@@ -215,6 +215,11 @@ bool makeAnAppointment(int msgid, struct msgbuf* patient, int pid_registration, 
                 correct = false;
                 break;
             }
+            else if (day[hour-9 + z][request.index] == 'y') {
+                printf("\tYou have an appointment that time!\n");
+                correct = false;
+                break;
+            }
         }
     }
     // pesel in appointment as patient's pesel
@@ -331,7 +336,9 @@ struct msgbuf displayStatusOfVisit(int msgid, struct msgbuf patient) {
             visit.pesel[i] = patient.pesel[i];
         }
         msgsnd(msgid, &visit, MSGBUF_SIZE, 0);
+        //printf("//wysłałem\n");
         msgrcv(msgid, &visit, MSGBUF_SIZE, my_pid, 0);
+        //printf("//odebrałem\n");
         displayVisit(&patient, &visit);
     }
     else {

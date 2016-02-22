@@ -33,7 +33,7 @@ int main() {
         //
         while (!quit) {
             // SEARCHING OUTDATED APPOINTMENTS
-            searchForOutdatedAppointments();
+            searchForOutdatedAppointments(msgid);
             // CHECK IF PATIENT WANT TO CHANGE THE DATE OF VISIT
             answerForChangeDateOfVisit(msgid);
             // CHECK IF PATIENT'S DELETED AN APPOINTMENT

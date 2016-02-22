@@ -12,7 +12,7 @@
 #include "inf122464_all.h"
 #include "inf122464_rfun.h"
 
-void searchForOutdatedAppointments() {
+void searchForOutdatedAppointments(int msgid) {
     time_t now;
     time(&now);
     int i;
@@ -28,6 +28,7 @@ void searchForOutdatedAppointments() {
             if ((vacation_list[i].date_of_visit + (vacation_list[i].time_of_visit * 86400)) < now) {
                 vacation_list[i].index = -1;
             }
+            deleteReservedVisits(msgid, vacation_list[i]);
         }
     }
     return;
@@ -38,7 +39,7 @@ void answerForChangeDateOfVisit(int msgid) {
     struct msgbuf new_date;
     int msgrcv_size = msgrcv(msgid, &new_date, MSGBUF_SIZE, CHANGE_VISIT, IPC_NOWAIT);
     if (msgrcv_size > 0) {
-        printf("%s", ctime( & new_date.date_of_visit));
+        //printf("%s", ctime( & new_date.date_of_visit));
         if (fork() == 0) {
             // choose doctor
             int i;
@@ -438,6 +439,7 @@ void answerForListOfVisits(int msgid, int msgrcv_size) {
 
             // INFORMATION ABOUT ONE CHOSEN APPOINTMENT
             msgrcv(msgid, &visit, MSGBUF_SIZE , pid_registration, 0);
+            pid_patient = visit.pid;
             if (visit.index == 1000) {   // resignation
                 exit(pid_registration);
                 return;
@@ -454,11 +456,15 @@ void answerForListOfVisits(int msgid, int msgrcv_size) {
                         break;
                     }
                 }
-                if (appropriate) counter++;
+                if (appropriate) {
+                    //printf("//znalazłem ale nie wysłałem\n");
+                    counter++;
+                }
                 if (appropriate && appointments_list[i].time_of_visit > 0 && counter == number) {
                     appointment = appointments_list[i];
                     appointment.typ = pid_patient;
                     msgsnd(msgid, &appointment, MSGBUF_SIZE, 0);
+                    //printf("//wysłałem\n");
                     exit(pid_registration);
                     return;
                 }

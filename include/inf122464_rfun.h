@@ -22,7 +22,7 @@ bool quit;
 void answerForDoctorsLeave(int msgid);
 void answerForChangeDateOfVisit(int msgid);
 void deleteVisit(int msgid, int msgrcv_size);
-void searchForOutdatedAppointments();
+void searchForOutdatedAppointments(int msgid);
 void searchForNewAppointment(int msgid, int msgrcv_size);
 void addPatient(int msgid, int msgrcv_size);
 void answerForListOfDoctors(int msgid, int msgrcv_size);
@@ -31,5 +31,6 @@ void answerForLoginRequest(int msgid, int msgrcv_size);
 void answerForListOfVisits(int msgid, int msgrcv_size);
 void answerForDoctorListOfVisits(int msgid, int msgrcv_size);
 bool checkExit(int msgid);
+void deleteReservedVisits(int msgid, struct msgbuf leave);
 
 #endif
