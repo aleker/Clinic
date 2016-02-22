@@ -37,9 +37,8 @@ struct msgbuf login(int msgid, int type) {
     int pid_user = getpid(); // pid of user (patient or doctor)
     request.pid = pid_user;
     bool appropriate = false;
-    int log_counter = 0;
+    int log_counter = 1;
     while (!appropriate && log_counter <= MAX_LOG_COUNTER) {
-        log_counter++;
         appropriate = true;
         printf("-----\n");
         printf("LOGIN\n");
@@ -59,6 +58,7 @@ struct msgbuf login(int msgid, int type) {
                         }
                         else {
                             printf("\tYou can use only digits!\n");
+                            log_counter++;
                             pesel_size = 0;
                             break;
                         }
@@ -92,11 +92,16 @@ struct msgbuf login(int msgid, int type) {
         }
         else {//if (request.typ == LOGIN_ANSWER) {
             appropriate = true;
-            printf("\tYou've login successfully.\n");
+            printf("\tYou've log in successfully.\n");
             return request;
         }
+        log_counter++;
     }
-    if (log_counter > MAX_LOG_COUNTER) request.index = 1000;
+    if (log_counter > MAX_LOG_COUNTER) {
+        request.index = 1000;
+        printf("\tYou haven't log in too many times! Quiting.\n");
+        quit = true;
+    }
     return request;
 }
 
