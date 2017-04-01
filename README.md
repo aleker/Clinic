@@ -21,4 +21,4 @@ After building this project you can run following programs in three separated te
 ```
 ./Registration
 ```
-Now, you can to follow instructions displayed in your terminal and test functionality. Have fun.
+Now, you can follow instructions displayed in your terminal and test functionality. Have fun.
